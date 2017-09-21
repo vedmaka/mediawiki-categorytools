@@ -1,0 +1,18 @@
+<p>
+	{{ messages.categorytools-page-description }}
+</p>
+
+<div id="jstree_demo_div">
+<ul>
+	{{# categories }}
+		<li>
+			{{ title }}
+			<ul>
+				{{# members }}
+					<li>{{ . }}</li>
+				{{/members}}
+			</ul>
+		</li>
+	{{/categories}}
+</ul>
+</div>

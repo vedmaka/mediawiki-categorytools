@@ -1,0 +1,43 @@
+{
+  "name": "CategoryTools",
+  "version": "1.0",
+  "author": [
+    "Alexey"
+  ],
+  "url": "https://www.mediawiki.org/wiki/Extension:CategoryTools",
+  "description": "Allows to manage, delete and rename wiki categories.",
+  "descriptionmsg": "categorytools-desc",
+  "type": "extension",
+  "MessagesDirs": {
+    "CategoryTools": [
+      "i18n"
+    ]
+  },
+  "AutoloadClasses": {
+    "CategoryTools": "includes/CategoryTools.class.php",
+    "SpecialCategoryTools": "includes/SpecialCategoryTools.php"
+  },
+  "ResourceModules": {
+    "ext.categoryTools.jstree": {
+      "styles": "jstree/themes/default/style.min.css",
+      "scripts": "jstree/jstree.min.js"
+    },
+    "ext.categoryTools.main": {
+      "styles": "ext.categoryTools.less",
+      "scripts": "ext.categoryTools.js",
+      "dependencies": [
+        "ext.categoryTools.jstree"
+      ]
+    }
+  },
+  "ResourceFileModulePaths": {
+    "localBasePath": "assets",
+    "remoteExtPath": "CategoryTools/assets"
+  },
+  "Hooks": {
+
+  },
+  "SpecialPages": {
+    "CategoryTools": "SpecialCategoryTools"
+  }
+}
