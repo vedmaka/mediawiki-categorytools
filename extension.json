@@ -15,12 +15,13 @@
   },
   "AutoloadClasses": {
     "CategoryTools": "includes/CategoryTools.class.php",
-    "SpecialCategoryTools": "includes/SpecialCategoryTools.php"
+    "SpecialCategoryTools": "includes/SpecialCategoryTools.php",
+    "CategoryToolsAPI": "includes/CategoryTools.api.php"
   },
   "ResourceModules": {
     "ext.categoryTools.jstree": {
       "styles": "jstree/themes/default/style.min.css",
-      "scripts": "jstree/jstree.min.js"
+      "scripts": "jstree/jstree.js"
     },
     "ext.categoryTools.main": {
       "styles": "ext.categoryTools.less",
@@ -39,5 +40,8 @@
   },
   "SpecialPages": {
     "CategoryTools": "SpecialCategoryTools"
+  },
+  "APIModules": {
+    "categorytools": "CategoryToolsAPI"
   }
 }

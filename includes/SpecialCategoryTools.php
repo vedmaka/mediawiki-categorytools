@@ -12,7 +12,9 @@ class SpecialCategoryTools extends SpecialPage {
 	public function execute( $subPage ) {
 
 		$this->getOutput()->setPageTitle( wfMessage('categorytools-page-title') );
+		$this->getOutput()->addModuleStyles('ext.categoryTools.jstree');
 		$this->getOutput()->addModules('ext.categoryTools.jstree');
+		$this->getOutput()->addModuleStyles('ext.categoryTools.main');
 		$this->getOutput()->addModules('ext.categoryTools.main');
 
 		$categoriesToRender = array();
