@@ -3,7 +3,9 @@
 class CategoryToolsAPI extends ApiBase {
 
 	private $parsedParams = array();
-	private $formattedData = array();
+	private $formattedData = array(
+		'error' => 'something gone wrong, please contact site administrator'
+	);
 
 	public function execute() {
 		$this->parsedParams = $this->extractRequestParams();
@@ -13,7 +15,7 @@ class CategoryToolsAPI extends ApiBase {
 				// TODO: ..
 				break;
 			case 'delete':
-				// TODO: ..
+				$this->delete();
 				break;
 			case 'read':
 				$this->read();
@@ -21,6 +23,44 @@ class CategoryToolsAPI extends ApiBase {
 		}
 		//$this->getResult()->addValue(null,null, $this->formattedData);
 		die( json_encode($this->formattedData) );
+	}
+
+	private function delete() {
+
+		global $wgContLang;
+
+		$categoryId = $this->parsedParams['id'];
+		$category = Category::newFromTitle( Title::newFromID($categoryId) );
+
+		if( !$category ) {
+			return false;
+		}
+
+		$categoryNamespace = $wgContLang->getNsText( NS_CATEGORY );
+		$pattern = "\[\[({$categoryNamespace}):([^\|\]]*)(\|[^\|\]]*)?\]\]";
+		$cleanText = '';
+
+		$pages = $category->getMembers();
+		/** @var Title $p */
+		foreach ($pages as $p) {
+			if( $p->getNamespace() !== NS_MAIN ) {
+				// Cleanup the category markup
+				$wp = WikiPage::newFromID($p->getArticleID());
+				$pageText = $wp->getContent()->getWikitextForTransclusion();
+				// Check linewise for category links:
+				foreach ( explode( "\n", $pageText ) as $textLine ) {
+					// Filter line through pattern and store the result:
+					$cleanText .= preg_replace( "/{$pattern}/i", "", $textLine ) . "\n";
+				}
+				// Place the cleaned text into the text box:
+				$cleanText = trim( $cleanText );
+				$wp->doEditContent(new WikitextContent($cleanText), 'Removed category by CategoryTools');
+				$wp->doPurge();
+			}
+		}
+
+		$this->formattedData = array('status' => 'success');
+
 	}
 
 	private function read() {

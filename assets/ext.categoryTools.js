@@ -20,6 +20,11 @@ $(function () {
 		ref.edit(sel);
 	});
     $('#btn_delete').click(function(){
+
+    	if(!confirm('Are you sure you want to delete the category? All pages assigned to the category will lost their assignment.')) {
+    		return false;
+		}
+
 		var ref = $('#jstree_demo_div').jstree(true),
 			sel = ref.get_selected();
 		if(!sel.length) { return false; }
@@ -36,12 +41,36 @@ $(function () {
 			$('#btn_delete').prop('disabled', true);
 		}
 	});
-	$('#jstree_demo_div').on('rename_node.jstree', function(node, text, old) {
+	$('#jstree_demo_div').on('rename_node.jstree', function(e, data) {
 		// TODO: ...
-		console.log(node, text, old);
+
+		if(!confirm('Please confirm category rename: "'+data.old+'" to "'+data.text+'" ?')) {
+			return false;
+		}
+
+		showShadow();
 	});
-	$('#jstree_demo_div').on('delete_node.jstree', function(node, parent) {
+	$('#jstree_demo_div').on('delete_node.jstree', function(e, data) {
 		// TODO: ... parent = '#" for root nodes
-		console.log(node, parent);
+		console.log(data);
+
+		$.post(mw.config.get('wgServer') + mw.config.get('wgScriptPath') + '/api.php?action=categorytools&method=delete&format=json',
+			{
+				'id': data.node.id
+			}, function(resp){
+				console.log(resp);
+				hideShadow();
+		});
+
+		showShadow();
 	});
+
+	function showShadow() {
+		$('#shadow').css('display', 'flex');
+	}
+
+	function hideShadow() {
+		$('#shadow').hide();
+	}
+
 });
