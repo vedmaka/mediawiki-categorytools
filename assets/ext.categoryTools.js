@@ -33,7 +33,7 @@ $(function () {
 	$('#jstree_demo_div').on('changed.jstree', function(e, data){
 		//console.log('changed.jstree');
 		if(data.selected.length) {
-			$('#cur_cat').html('with <a target="_blank" href="'+mw.config.get('wgServer') + mw.config.get('wgScriptPath') + '/Category:' + data.node.text+'">"'+data.node.text+'"</a> category');
+			$('#cur_cat').html('with <a target="_blank" href="'+mw.config.get('wgServer') + mw.config.get('wgScriptPath') + '/index.php?title=Category:' + data.node.text+'">"'+data.node.text+'"</a> category');
 			$('#btn_rename').prop('disabled', false);
 			$('#btn_delete').prop('disabled', false);
 		}else{
