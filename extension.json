@@ -27,6 +27,7 @@
       "styles": "ext.categoryTools.less",
       "scripts": "ext.categoryTools.js",
       "dependencies": [
+        "mediawiki.Title",
         "ext.categoryTools.jstree"
       ]
     }

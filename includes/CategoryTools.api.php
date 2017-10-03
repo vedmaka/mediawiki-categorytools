@@ -26,12 +26,22 @@ class CategoryToolsAPI extends ApiBase {
 	}
 
 	private function rename() {
-		global $wgContLang;
 
 		$categoryId = $this->parsedParams['id'];
+		$newName = trim($this->parsedParams['new_category_name']);
+
+		$this->renameCategory($categoryId, $newName);
+
+		$this->formattedData = array('status' => 'success');
+
+	}
+
+	private function renameCategory($categoryId, $newName) {
+
+		global $wgContLang;
+
 		$category = Category::newFromTitle( Title::newFromID($categoryId) );
 		$categoryName = $category->getTitle()->getText();
-		$newName = trim($this->parsedParams['new_category_name']);
 
 		if( !$category ) {
 			return false;
@@ -59,25 +69,23 @@ class CategoryToolsAPI extends ApiBase {
 		/** @var Title $p */
 		foreach ($category->getMembers() as $p) {
 			//if( $p->getNamespace() === NS_MAIN ) {
-				// Cleanup the category markup
-				$wp = WikiPage::newFromID($p->getArticleID());
-				$pageText = $wp->getContent()->getWikitextForTransclusion();
-				// Check linewise for category links:
-				foreach ( explode( "\n", $pageText ) as $textLine ) {
-					// Filter line through pattern and store the result:
-					$cleanText .= preg_replace( "/{$pattern}/i", "[[{$categoryNamespace}:{$newName}]]", $textLine ) . "\n";
-				}
-				// Place the cleaned text into the text box:
-				$cleanText = trim( $cleanText );
-				$wp->doEditContent(new WikitextContent($cleanText), 'Renamed category by CategoryTools', EDIT_DEFER_UPDATES);
+			// Cleanup the category markup
+			$wp = WikiPage::newFromID($p->getArticleID());
+			$pageText = $wp->getContent()->getWikitextForTransclusion();
+			// Check linewise for category links:
+			foreach ( explode( "\n", $pageText ) as $textLine ) {
+				// Filter line through pattern and store the result:
+				$cleanText .= preg_replace( "/{$pattern}/i", "[[{$categoryNamespace}:{$newName}]]", $textLine ) . "\n";
+			}
+			// Place the cleaned text into the text box:
+			$cleanText = trim( $cleanText );
+			$wp->doEditContent(new WikitextContent($cleanText), 'Renamed category by CategoryTools', EDIT_DEFER_UPDATES);
 			//}
 		}
 
 		//WikiPage::newFromID( Title::newFromText($newName, NS_CATEGORY)->getArticleID() )->doPurge();
 
 		wfGetDB(DB_MASTER)->commit();
-
-		$this->formattedData = array('status' => 'success');
 
 	}
 

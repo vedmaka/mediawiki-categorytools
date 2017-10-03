@@ -44,12 +44,19 @@ $(function () {
 	});
 	$('#jstree_demo_div').on('rename_node.jstree', function(e, data) {
 
+        var ref = $('#jstree_demo_div').jstree(true);
+
 		// No need to do anything if there are no changes
 		if( data.old === data.text ) {
 			return false;
 		}
 
-        var ref = $('#jstree_demo_div').jstree(true);
+		var mwTitle = mw.Title.newFromText(data.text, 10);
+		if( !mwTitle || mwTitle.getRelativeText(10) === '' || mwTitle.getRelativeText(10).trim() !== data.text.trim() ) {
+            ref.set_text(data.node, data.old);
+		    alert('Illegal characters in provided title!');
+		    return false;
+        }
 
 		// Get a confirmation from user
 		if(!confirm('Please confirm category rename: "'+data.old+'" to "'+data.text+'" ?')) {
