@@ -5,8 +5,12 @@ class SpecialCategoryTools extends SpecialPage {
 	private $templater;
 
 	public function __construct() {
-		parent::__construct( 'CategoryTools', 'sysop' );
+		parent::__construct( 'CategoryTools', 'delete');
 		$this->templater = new TemplateParser( dirname(__FILE__).'/../templates/' , true);
+	}
+
+	public function getGroupName() {
+		return 'other';
 	}
 
 	public function execute( $subPage ) {

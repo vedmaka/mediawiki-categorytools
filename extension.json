@@ -7,7 +7,7 @@
   "url": "https://www.mediawiki.org/wiki/Extension:CategoryTools",
   "description": "Allows to manage, delete and rename wiki categories.",
   "descriptionmsg": "categorytools-desc",
-  "type": "extension",
+  "type": "special",
   "MessagesDirs": {
     "CategoryTools": [
       "i18n"
