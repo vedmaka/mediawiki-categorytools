@@ -58,7 +58,7 @@ class CategoryToolsAPI extends ApiBase {
 		// Reassign category members
 		/** @var Title $p */
 		foreach ($category->getMembers() as $p) {
-			if( $p->getNamespace() === NS_MAIN ) {
+			//if( $p->getNamespace() === NS_MAIN ) {
 				// Cleanup the category markup
 				$wp = WikiPage::newFromID($p->getArticleID());
 				$pageText = $wp->getContent()->getWikitextForTransclusion();
@@ -70,7 +70,7 @@ class CategoryToolsAPI extends ApiBase {
 				// Place the cleaned text into the text box:
 				$cleanText = trim( $cleanText );
 				$wp->doEditContent(new WikitextContent($cleanText), 'Renamed category by CategoryTools', EDIT_DEFER_UPDATES);
-			}
+			//}
 		}
 
 		//WikiPage::newFromID( Title::newFromText($newName, NS_CATEGORY)->getArticleID() )->doPurge();
@@ -83,9 +83,17 @@ class CategoryToolsAPI extends ApiBase {
 
 	private function delete() {
 
+		$categoryId = $this->parsedParams['id'];
+		$this->deleteCategory($categoryId);
+
+		$this->formattedData = array('status' => 'success');
+
+	}
+
+	private function deleteCategory($categoryId) {
+
 		global $wgContLang;
 
-		$categoryId = $this->parsedParams['id'];
 		$category = Category::newFromTitle( Title::newFromID($categoryId) );
 		$categoryName = $category->getTitle()->getText();
 
@@ -114,14 +122,18 @@ class CategoryToolsAPI extends ApiBase {
 				$wp->doEditContent(new WikitextContent($cleanText), 'Removed category by CategoryTools', EDIT_DEFER_UPDATES);
 				//$wp->doPurge();
 			}
+			// Delete sub-categories
+			if( $p->getNamespace() == NS_CATEGORY ) {
+				// And their pages
+				$this->deleteCategory($p->getArticleID());
+				Article::newFromID( $p->getArticleID() )->doDeleteArticle('deleted by CategoryTools');
+			}
 		}
 
 		// Finally delete the category page
 		Article::newFromID( $category->getTitle()->getArticleID() )->doDeleteArticle('deleted by CategoryTools');
 
 		wfGetDB(DB_MASTER)->commit();
-
-		$this->formattedData = array('status' => 'success');
 
 	}
 

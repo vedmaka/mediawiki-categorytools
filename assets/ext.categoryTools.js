@@ -21,7 +21,7 @@ $(function () {
 	});
     $('#btn_delete').click(function(){
 
-    	if(!confirm('Are you sure you want to delete the category? All pages assigned to the category will lost their assignment.')) {
+    	if(!confirm('Are you sure you want to delete the category? All pages assigned to the category will lost their assignment, all sub-categories will be deleted!')) {
     		return false;
 		}
 
