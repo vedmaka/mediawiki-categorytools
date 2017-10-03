@@ -31,8 +31,9 @@ $(function () {
 		ref.delete_node(sel);
 	});
 	$('#jstree_demo_div').on('changed.jstree', function(e, data){
+		//console.log('changed.jstree');
 		if(data.selected.length) {
-			$('#cur_cat').html('with <a target="_blank" href="'+data.node.data.url+'">"'+data.node.text+'"</a> category');
+			$('#cur_cat').html('with <a target="_blank" href="'+mw.config.get('wgServer') + mw.config.get('wgScriptPath') + '/Category:' + data.node.text+'">"'+data.node.text+'"</a> category');
 			$('#btn_rename').prop('disabled', false);
 			$('#btn_delete').prop('disabled', false);
 		}else{
@@ -70,6 +71,8 @@ $(function () {
             }, function(resp){
                 console.log(resp);
                 hideShadow();
+                //ref.select_node(data.node, false, false, {});
+				ref.deselect_all();
 		});
 
 		showShadow();
