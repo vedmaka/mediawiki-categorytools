@@ -15,6 +15,11 @@ class SpecialCategoryTools extends SpecialPage {
 
 	public function execute( $subPage ) {
 
+		if( !$this->getUser()->isAllowed('delete') ) {
+			$this->getOutput()->addHTML("You're not allowed to manage categories.");
+			return false;
+		}
+
 		$this->getOutput()->setPageTitle( wfMessage('categorytools-page-title') );
 		$this->getOutput()->addModuleStyles('ext.categoryTools.jstree');
 		$this->getOutput()->addModules('ext.categoryTools.jstree');
