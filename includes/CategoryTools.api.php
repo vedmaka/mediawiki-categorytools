@@ -12,7 +12,7 @@ class CategoryToolsAPI extends ApiBase {
 		$method = $this->parsedParams['method'];
 		switch ($method) {
 			case 'rename':
-				// TODO: ..
+				$this->rename();
 				break;
 			case 'delete':
 				$this->delete();
@@ -25,25 +25,84 @@ class CategoryToolsAPI extends ApiBase {
 		die( json_encode($this->formattedData) );
 	}
 
+	private function rename() {
+		global $wgContLang;
+
+		$categoryId = $this->parsedParams['id'];
+		$category = Category::newFromTitle( Title::newFromID($categoryId) );
+		$categoryName = $category->getTitle()->getText();
+		$newName = trim($this->parsedParams['new_category_name']);
+
+		if( !$category ) {
+			return false;
+		}
+		if( !$newName ) {
+			return false;
+		}
+		$testCategory = Title::newFromText($newName, NS_CATEGORY);
+		if( $testCategory->exists() ) {
+			return false;
+		}
+
+		$categoryNamespace = $wgContLang->getNsText( NS_CATEGORY );
+		//TODO: this pattern will lead to ANY category removal from page text, need to be changed
+		$pattern = "\[\[({$categoryNamespace}):{$categoryName}([^\|\]]*)(\|[^\|\]]*)?\]\]";
+		$cleanText = '';
+
+		// Finally rename the category itself
+		$mover = new MovePage( $category->getTitle(), Title::newFromText($newName, NS_CATEGORY) );
+		if( !$mover->isValidMove() ) {
+			return false;
+		}
+		$mover->move( $this->getUser(), 'moved by CategoryTools', false );
+
+		// Reassign category members
+		/** @var Title $p */
+		foreach ($category->getMembers() as $p) {
+			if( $p->getNamespace() === NS_MAIN ) {
+				// Cleanup the category markup
+				$wp = WikiPage::newFromID($p->getArticleID());
+				$pageText = $wp->getContent()->getWikitextForTransclusion();
+				// Check linewise for category links:
+				foreach ( explode( "\n", $pageText ) as $textLine ) {
+					// Filter line through pattern and store the result:
+					$cleanText .= preg_replace( "/{$pattern}/i", "[[{$categoryNamespace}:{$newName}]]", $textLine ) . "\n";
+				}
+				// Place the cleaned text into the text box:
+				$cleanText = trim( $cleanText );
+				$wp->doEditContent(new WikitextContent($cleanText), 'Renamed category by CategoryTools', EDIT_DEFER_UPDATES);
+			}
+		}
+
+		//WikiPage::newFromID( Title::newFromText($newName, NS_CATEGORY)->getArticleID() )->doPurge();
+
+		wfGetDB(DB_MASTER)->commit();
+
+		$this->formattedData = array('status' => 'success');
+
+	}
+
 	private function delete() {
 
 		global $wgContLang;
 
 		$categoryId = $this->parsedParams['id'];
 		$category = Category::newFromTitle( Title::newFromID($categoryId) );
+		$categoryName = $category->getTitle()->getText();
 
 		if( !$category ) {
 			return false;
 		}
 
 		$categoryNamespace = $wgContLang->getNsText( NS_CATEGORY );
-		$pattern = "\[\[({$categoryNamespace}):([^\|\]]*)(\|[^\|\]]*)?\]\]";
+		//TODO: this pattern will lead to ANY category removal from page text, need to be changed
+		$pattern = "\[\[({$categoryNamespace}):{$categoryName}([^\|\]]*)(\|[^\|\]]*)?\]\]";
 		$cleanText = '';
 
-		$pages = $category->getMembers();
+		// Delete category members
 		/** @var Title $p */
-		foreach ($pages as $p) {
-			if( $p->getNamespace() !== NS_MAIN ) {
+		foreach ($category->getMembers() as $p) {
+			if( $p->getNamespace() === NS_MAIN ) {
 				// Cleanup the category markup
 				$wp = WikiPage::newFromID($p->getArticleID());
 				$pageText = $wp->getContent()->getWikitextForTransclusion();
@@ -54,10 +113,15 @@ class CategoryToolsAPI extends ApiBase {
 				}
 				// Place the cleaned text into the text box:
 				$cleanText = trim( $cleanText );
-				$wp->doEditContent(new WikitextContent($cleanText), 'Removed category by CategoryTools');
-				$wp->doPurge();
+				$wp->doEditContent(new WikitextContent($cleanText), 'Removed category by CategoryTools', EDIT_DEFER_UPDATES);
+				//$wp->doPurge();
 			}
 		}
+
+		// Finally delete the category page
+		Article::newFromID( $category->getTitle()->getArticleID() )->doDeleteArticle('deleted by CategoryTools');
+
+		wfGetDB(DB_MASTER)->commit();
 
 		$this->formattedData = array('status' => 'success');
 
@@ -77,13 +141,27 @@ class CategoryToolsAPI extends ApiBase {
 			foreach ($members as $member) {
 				if( $member->getNamespace() != NS_CATEGORY ) {
 					$catItem['data']['members_count']++;
+					$catItem['pages'][] = array(
+						'title' => $member->getText(),
+						'link' => $member->getFullURL()
+					);
 					continue;
 				}
+				$subCateMembers = array();
+
+				foreach( Category::newFromTitle($member)->getMembers() as $m ) {
+					$subCateMembers[] = array(
+						'title' => $m->getText(),
+						'link' => $m->getFullURL()
+					);
+				}
+
 				$catItem['children'][] = array(
 					'text' => $member->getText(),
 					'id' => $member->getArticleID(),
 					'children' => array(),
-					'data' => array( 'url' => $member->getFullURL() )
+					'data' => array( 'url' => $member->getFullURL() ),
+					'pages' => $subCateMembers
 				);
 			}
 			$categoriesToRender[] = $catItem;

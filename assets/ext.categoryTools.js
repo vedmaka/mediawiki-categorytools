@@ -42,17 +42,40 @@ $(function () {
 		}
 	});
 	$('#jstree_demo_div').on('rename_node.jstree', function(e, data) {
-		// TODO: ...
 
-		if(!confirm('Please confirm category rename: "'+data.old+'" to "'+data.text+'" ?')) {
+		// No need to do anything if there are no changes
+		if( data.old === data.text ) {
 			return false;
 		}
+
+        var ref = $('#jstree_demo_div').jstree(true);
+
+		// Get a confirmation from user
+		if(!confirm('Please confirm category rename: "'+data.old+'" to "'+data.text+'" ?')) {
+            ref.set_text(data.node, data.old);
+			return false;
+		}
+
+		//
+		if( !data.text.length ) {
+			alert('Category name can\'t be empty string!');
+            ref.set_text(data.node, data.old);
+			return false;
+		}
+
+        $.post(mw.config.get('wgServer') + mw.config.get('wgScriptPath') + '/api.php?action=categorytools&method=rename&format=json',
+            {
+                'id': data.node.id,
+				'new_category_name': data.text
+            }, function(resp){
+                console.log(resp);
+                hideShadow();
+		});
 
 		showShadow();
 	});
 	$('#jstree_demo_div').on('delete_node.jstree', function(e, data) {
 		// TODO: ... parent = '#" for root nodes
-		console.log(data);
 
 		$.post(mw.config.get('wgServer') + mw.config.get('wgScriptPath') + '/api.php?action=categorytools&method=delete&format=json',
 			{
