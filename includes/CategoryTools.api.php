@@ -45,7 +45,6 @@ class CategoryToolsAPI extends ApiBase {
 		}
 
 		$categoryNamespace = $wgContLang->getNsText( NS_CATEGORY );
-		//TODO: this pattern will lead to ANY category removal from page text, need to be changed
 		$pattern = "\[\[({$categoryNamespace}):{$categoryName}([^\|\]]*)(\|[^\|\]]*)?\]\]";
 		$cleanText = '';
 
@@ -95,7 +94,6 @@ class CategoryToolsAPI extends ApiBase {
 		}
 
 		$categoryNamespace = $wgContLang->getNsText( NS_CATEGORY );
-		//TODO: this pattern will lead to ANY category removal from page text, need to be changed
 		$pattern = "\[\[({$categoryNamespace}):{$categoryName}([^\|\]]*)(\|[^\|\]]*)?\]\]";
 		$cleanText = '';
 
