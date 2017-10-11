@@ -2,5 +2,6 @@
   "categorytools": "CategoryTools",
   "categorytools-desc": "Allows to manage, delete and rename wiki categories.",
   "categorytools-page-title": "Manage categories",
-  "categorytools-page-description": "Below you can manage categories in your wiki - select a category or sub-category from the list and click action buttons on the right."
+  "categorytools-page-description": "Below you can manage categories in your wiki - select a category or sub-category from the list and click action buttons on the right.",
+  "categorytools-action-not-allowed": "This action is now allowed for your account, only site administrators are allowed to create root categories. If you need to create a category please add a sub-category instead."
 }

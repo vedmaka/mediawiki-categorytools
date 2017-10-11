@@ -13,9 +13,13 @@
       "i18n"
     ]
   },
+  "config": {
+    "restrictCategories": false
+  },
   "AutoloadClasses": {
     "CategoryTools": "includes/CategoryTools.class.php",
     "SpecialCategoryTools": "includes/SpecialCategoryTools.php",
+    "SpecialCategoryToolsHooks": "includes/SpecialCategoryTools.hooks.php",
     "CategoryToolsAPI": "includes/CategoryTools.api.php"
   },
   "ResourceModules": {
@@ -37,12 +41,20 @@
     "remoteExtPath": "CategoryTools/assets"
   },
   "Hooks": {
-
+    "ArticleSave": "SpecialCategoryToolsHooks::onArticleSave"
   },
   "SpecialPages": {
     "CategoryTools": "SpecialCategoryTools"
   },
   "APIModules": {
     "categorytools": "CategoryToolsAPI"
+  },
+  "AvailableRights": [
+    "categorytools-create-categories"
+  ],
+  "GroupPermissions": {
+    "sysop": {
+      "categorytools-create-categories": true
+    }
   }
 }
