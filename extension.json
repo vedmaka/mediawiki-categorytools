@@ -14,7 +14,7 @@
     ]
   },
   "config": {
-    "restrictCategories": false
+    "RestrictCategories": false
   },
   "AutoloadClasses": {
     "CategoryTools": "includes/CategoryTools.class.php",

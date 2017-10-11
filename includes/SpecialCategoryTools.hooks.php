@@ -19,8 +19,14 @@ class SpecialCategoryToolsHooks {
 	 */
 	public static function onArticleSave( &$article, &$user, &$text, &$summary, $minor, $watchthis, $sectionanchor, &$flags, &$status ) {
 
-		global $wgContLang;
+		global $wgContLang, $wgRestrictCategories;
 
+		// Check if feature is enabled
+		if( !$wgRestrictCategories ) {
+			return true;
+		}
+
+		// Check namespace of the article being edited/created (we're interested only in categories)
 		$ns = $article->getTitle()->getNamespace();
 		if( $ns == NS_CATEGORY ) {
 
