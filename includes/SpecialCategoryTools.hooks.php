@@ -50,4 +50,14 @@ class SpecialCategoryToolsHooks {
 
 	}
 
+	public static function onResourceLoaderGetConfigVars( &$vars ) {
+
+		global $wgRestrictCategories;
+
+		$vars['wgRestrictCategories'] = $wgRestrictCategories;
+
+		return true;
+
+	}
+
 }

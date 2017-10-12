@@ -41,7 +41,8 @@
     "remoteExtPath": "CategoryTools/assets"
   },
   "Hooks": {
-    "ArticleSave": "SpecialCategoryToolsHooks::onArticleSave"
+    "ArticleSave": [ "SpecialCategoryToolsHooks::onArticleSave" ],
+    "ResourceLoaderGetConfigVars": [ "SpecialCategoryToolsHooks::onResourceLoaderGetConfigVars" ]
   },
   "SpecialPages": {
     "CategoryTools": "SpecialCategoryTools"
