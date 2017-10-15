@@ -1,4 +1,5 @@
 $(function () {
+
     $('#jstree_demo_div').jstree({
 		"core" : {
 			"animation" : 0,
@@ -10,8 +11,17 @@ $(function () {
 				dataType: "json"
 			}
 		},
-		"plugins" : [ "wholerow" ]
+		"plugins" : [ "wholerow", "dnd" ],
+		"dnd": {
+			'is_draggable': function(nodes) {
+				console.log(nodes);
+				return true;
+			},
+            'large_drop_target': true,
+            'copy': false
+		}
     });
+
     $('#btn_rename').click(function(){
 		var ref = $('#jstree_demo_div').jstree(true),
 			sel = ref.get_selected();
@@ -19,6 +29,7 @@ $(function () {
 		sel = sel[0];
 		ref.edit(sel);
 	});
+
     $('#btn_delete').click(function(){
 
     	if(!confirm('Are you sure you want to delete the category? All pages assigned to the category will lost their assignment, all sub-categories will be deleted!')) {
@@ -30,6 +41,7 @@ $(function () {
 		if(!sel.length) { return false; }
 		ref.delete_node(sel);
 	});
+
 	$('#jstree_demo_div').on('changed.jstree', function(e, data){
 		//console.log('changed.jstree');
 		if(data.selected.length) {
@@ -42,6 +54,7 @@ $(function () {
 			$('#btn_delete').prop('disabled', true);
 		}
 	});
+
 	$('#jstree_demo_div').on('rename_node.jstree', function(e, data) {
 
         var ref = $('#jstree_demo_div').jstree(true);
@@ -84,6 +97,7 @@ $(function () {
 
 		showShadow();
 	});
+
 	$('#jstree_demo_div').on('delete_node.jstree', function(e, data) {
 		// TODO: ... parent = '#" for root nodes
 
@@ -97,6 +111,52 @@ $(function () {
 
 		showShadow();
 	});
+
+	$(document).on('dnd_stop.vakata', function (e, data) {
+
+	    console.log(data);
+
+	    var ref = $('#jstree_demo_div').jstree(true);
+	    var droppedNode = ref.get_node(data.data.obj[0]);
+
+        console.log('Node '+droppedNode.id+' was dropped!');
+        if( droppedNode.parents.length > 1 ) {
+            //console.log('Was dropped into another category!');
+            var parentNode = ref.get_node(droppedNode.parent);
+            //console.log('Parent: '+parentNode.id);
+
+            // Sub-category actions
+            $.post(mw.config.get('wgServer') + mw.config.get('wgScriptPath') + '/api.php?action=categorytools&method=make_subcategory&format=json',
+                {
+                    'id': droppedNode.id,
+                    'parent': parentNode.id
+                }, function(resp){
+                    console.log(resp);
+                    hideShadow();
+                    ref.refresh(); // it's necessary to refresh tree in order to prevent conflicts when same category is a child of many root categories
+                });
+
+            showShadow();
+
+        }else{
+            //console.log('Was dropped at root!');
+
+            // Root category actions
+            $.post(mw.config.get('wgServer') + mw.config.get('wgScriptPath') + '/api.php?action=categorytools&method=make_root&format=json',
+                {
+                    'id': droppedNode.id
+                }, function(resp){
+                    console.log(resp);
+                    hideShadow();
+                    ref.refresh(); // see above
+                });
+
+            showShadow();
+
+        }
+
+    });
+
 
 	function showShadow() {
 		$('#shadow').css('display', 'flex');

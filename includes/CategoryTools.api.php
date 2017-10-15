@@ -20,9 +20,76 @@ class CategoryToolsAPI extends ApiBase {
 			case 'read':
 				$this->read();
 				break;
+			case 'make_subcategory':
+				$this->make_subcategory();
+				break;
+			case 'make_root':
+				$this->make_root();
+				break;
 		}
 		//$this->getResult()->addValue(null,null, $this->formattedData);
 		die( json_encode($this->formattedData) );
+	}
+
+	private function make_subcategory() {
+
+		global $wgContLang;
+
+		$categoryId = $this->parsedParams['id'];
+		$categoryParentId = $this->parsedParams['parent'];
+		$category = Category::newFromTitle( Title::newFromID($categoryId) );
+		$categoryParent = Category::newFromTitle( Title::newFromID($categoryParentId) );
+		$categoryName = $category->getTitle()->getText();
+		$categoryParentName = $categoryParent->getTitle()->getText();
+
+		// First, let's clear out any categories from category
+		$this->make_root();
+
+		// Then, lest make it a sub-category
+		$categoryNamespace = $wgContLang->getNsText( NS_CATEGORY );
+		$wp = WikiPage::newFromID($category->getTitle()->getArticleID());
+		$pageText = $wp->getContent()->getWikitextForTransclusion();
+		$pageText .= "\n[[{$categoryNamespace}:{$categoryParentName}]]";
+		$wp->doEditContent(new WikitextContent($pageText), 'Converted to sub-category by CategoryTools', EDIT_DEFER_UPDATES);
+
+		wfGetDB(DB_MASTER)->commit();
+
+		$this->formattedData = array('status' => 'success');
+
+	}
+
+	private function make_root() {
+
+		global $wgContLang;
+
+		$categoryId = $this->parsedParams['id'];
+		$category = Category::newFromTitle( Title::newFromID($categoryId) );
+
+		if( !$category ) {
+			return false;
+		}
+
+		$categoryName = $category->getTitle()->getText();
+
+		$categoryNamespace = $wgContLang->getNsText( NS_CATEGORY );
+		$pattern = "\[\[({$categoryNamespace}):([^\|\]]*)(\|[^\|\]]*)?\]\]";
+		$cleanText = '';
+
+		// Clean up category text from any other categories entries
+		$wp = WikiPage::newFromID($category->getTitle()->getArticleID());
+		$pageText = $wp->getContent()->getWikitextForTransclusion();
+		foreach ( explode( "\n", $pageText ) as $textLine ) {
+			// Filter line through pattern and store the result:
+			$cleanText .= preg_replace( "/{$pattern}/i", "", $textLine ) . "\n";
+		}
+		$cleanText = trim( $cleanText );
+		$wp->doEditContent(new WikitextContent($cleanText), 'Converted to root category by CategoryTools', EDIT_DEFER_UPDATES);
+
+
+		wfGetDB(DB_MASTER)->commit();
+
+		$this->formattedData = array('status' => 'success');
+
 	}
 
 	private function rename() {
@@ -147,16 +214,25 @@ class CategoryToolsAPI extends ApiBase {
 
 	private function read() {
 		$categoriesToRender = array();
+
+		// Fetch only root categories
 		$categories = CategoryTools::getAllCategories();
+
 		foreach ($categories as $category) {
+
+			// Add root categories
 			$catItem['text'] = $category->getTitle()->getText();
 			$catItem['id'] = ''.$category->getTitle()->getArticleID();
-			$catItem['children'] = array();
 			$catItem['data']['url'] = $category->getTitle()->getFullURL();
 			$catItem['data']['members_count'] = 0;
-			$members = $category->getMembers();
+
+			$catItem['children'] = $this->readCategory($category);
+
+			//$members = $category->getMembers();
 			/** @var Title $member */
-			foreach ($members as $member) {
+			/*foreach ($members as $member) {
+
+				// Add information about pages (not used for this moment)
 				if( $member->getNamespace() != NS_CATEGORY ) {
 					$catItem['data']['members_count']++;
 					$catItem['pages'][] = array(
@@ -165,6 +241,7 @@ class CategoryToolsAPI extends ApiBase {
 					);
 					continue;
 				}
+
 				$subCateMembers = array();
 
 				foreach( Category::newFromTitle($member)->getMembers() as $m ) {
@@ -181,10 +258,34 @@ class CategoryToolsAPI extends ApiBase {
 					'data' => array( 'url' => $member->getFullURL() ),
 					'pages' => $subCateMembers
 				);
-			}
+			}*/
+
 			$categoriesToRender[] = $catItem;
 		}
+
 		$this->formattedData = $categoriesToRender;
+	}
+
+	/**
+	 * @param Category $category
+	 * @return array
+	 */
+	private function readCategory($category) {
+		$children = array();
+		/** @var Title $m */
+		foreach ($category->getMembers() as $m) {
+			if( $m->getNamespace() != NS_CATEGORY ) {
+				continue;
+			}
+			$children[] = array(
+				'text' => $m->getText(),
+				'id' => $m->getArticleID(),
+				'data' => array( 'url' => $m->getFullURL() ),
+				'pages' => array(), //TODO:...
+				'children' => $this->readCategory(Category::newFromTitle($m))
+			);
+		}
+		return $children;
 	}
 
 	public function getAllowedParams( /* $flags = 0 */ ) {
@@ -202,6 +303,10 @@ class CategoryToolsAPI extends ApiBase {
 				ApiBase::PARAM_TYPE => 'string',
 				ApiBase::PARAM_REQUIRED => false
 			),
+			'parent' => array(
+				ApiBase::PARAM_TYPE => 'integer',
+				ApiBase::PARAM_REQUIRED => false
+			)
 		));
 	}
 
